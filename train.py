@@ -24,8 +24,8 @@ x_train = train_df.drop(columns=["id", "Depression"])
 y_train = train_df["Depression"]
 
 logistic_regression_pipeline = Pipeline([('preprocess', preprocessor), ('classifier', LogisticRegression(max_iter=1000))])
-tree_pipeline = Pipeline([('preprocess', preprocessor), ('classifier', DecisionTreeClassifier())])
-svm_pipeline = Pipeline([('preprocess', preprocessor), ('classifier', SVC())])
+tree_pipeline = Pipeline([('preprocess', preprocessor), ('classifier', DecisionTreeClassifier(max_depth=3))])
+svm_pipeline = Pipeline([('preprocess', preprocessor), ('classifier', SVC(probability=True))])
 
 
 logistic_regression_pipeline.fit(x_train, y_train)

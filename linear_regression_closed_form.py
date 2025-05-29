@@ -1,11 +1,14 @@
 import pandas as pd
-import numpy as np
 from pipeline import call_preprocess
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from implemented_models.LinearRegrClosedForm import LinearRegrClosedForm
+import numpy as np
+from utils import make_table
 
 train_df = pd.read_csv("sets/train_depression.csv")
 valid_df = pd.read_csv("sets/valid_depression.csv")
 test_df = pd.read_csv("sets/test_depression.csv")
+
 preprocessor = call_preprocess(["CGPA", "Depression"])
 
 target_column = "CGPA"
@@ -24,28 +27,28 @@ x_train_prep = preprocessor.fit_transform(x_train)
 x_valid_prep = preprocessor.transform(x_valid)
 x_test_prep = preprocessor.transform(x_test)
 
-
-def closed_form_linear_regression(x, y):
-    X_bias = np.hstack([np.ones((x.shape[0], 1)), x])
-    return np.linalg.pinv(X_bias.T @ X_bias) @ X_bias.T @ y.values
-
-def predict(x, w):
-    x_bias = np.hstack([np.ones((x.shape[0], 1)), x])
-    return x_bias @ w
+linear_regr_closed = LinearRegrClosedForm()
+linear_regr_closed.fit(x_train_prep.toarray(), y_train)
 
 
-w = closed_form_linear_regression(x_train_prep.toarray(), y_train)
+y_pred_train = linear_regr_closed.predict(x_train_prep.toarray())
+y_pred_valid = linear_regr_closed.predict(x_valid_prep.toarray())
+y_pred_test = linear_regr_closed.predict(x_test_prep.toarray())
 
-y_pred_train = predict(x_train_prep.toarray(), w)
-y_pred_valid = predict(x_valid_prep.toarray(), w)
-y_pred_test = predict(x_test_prep.toarray(), w)
 
-mse_train = mean_squared_error(y_train, y_pred_train)
-mse_valid = mean_squared_error(y_valid, y_pred_valid)
-mse_test = mean_squared_error(y_test, y_pred_test)
+mae_train = round(mean_absolute_error(y_train, y_pred_train), 4)
+rmse_train = round(np.sqrt(mean_squared_error(y_train, y_pred_train)), 4)
 
-print("Wyniki własnej regresji liniowej (Closed-form)")
-print(f"{'Zbiór':<12}{'MSE':>10}")
-print(f"{'Train':<12}{mse_train:>10.4f}")
-print(f"{'Validation':<12}{mse_valid:>10.4f}")
-print(f"{'Test':<12}{mse_test:>10.4f}")
+mae_valid = round(mean_absolute_error(y_valid, y_pred_valid), 4)
+rmse_valid = round(np.sqrt(mean_squared_error(y_valid, y_pred_valid)), 4)
+
+mae_test = round(mean_absolute_error(y_test, y_pred_test), 4)
+rmse_test = round(np.sqrt(mean_squared_error(y_test, y_pred_test)), 4)
+
+make_table(
+    "Regresja liniowa (Closed-form)",
+    "MAE", "RMSE",
+    mae_train, rmse_train,
+    mae_valid, rmse_valid,
+    mae_test, rmse_test
+)
